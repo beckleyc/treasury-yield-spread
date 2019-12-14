@@ -1,4 +1,11 @@
 import axios, { AxiosRequestConfig, AxiosResponse } from 'axios';
+import {config, DotenvConfigOutput} from 'dotenv';
+
+let envConfig: DotenvConfigOutput = config();
+console.log(envConfig);
+const QUANDL_API_KEY = process.env.QUANDL_API_KEY || 'INVALID';
+main();
+
 
 interface YieldResponse {
     "threeMonth": AxiosResponse<any>,
@@ -6,10 +13,19 @@ interface YieldResponse {
 }
 
 async function main() {
-    const yieldData = await getYieldResponseData();
-    const spread = getYieldSpread(yieldData);
-
-    console.log("Spread for last 10 days: ", spread);
+    try {
+        if (QUANDL_API_KEY === 'INVALID') {
+            throw new Error('Invalid Quandl API key, go sign up and get one!');
+        }
+    
+        const yieldData = await getYieldResponseData();
+        const spread = getYieldSpread(yieldData);
+    
+        console.log("Spread for last 10 days: ", spread);
+    } catch (error) {
+        throw new Error(error);
+    }
+    
 }
 
 async function getYieldResponseData(): Promise<YieldResponse> {
@@ -30,18 +46,15 @@ function getYieldSpread({threeMonth, tenYear}: YieldResponse) {
 }
 
 async function getThreeMonthYield() {
-    const url = 'https://www.quandl.com/api/v3/datasets/FRED/DTB3.json?api_key=1gKbE_oE1FyxTB5FcFhH';
+    const url = `https://www.quandl.com/api/v3/datasets/FRED/DTB3.json?api_key=${QUANDL_API_KEY}`;
     return sendGetRequest(url);
 }
 
 async function getTenYearYield() {
-    const url = 'https://www.quandl.com/api/v3/datasets/FRED/DGS10.json?api_key=1gKbE_oE1FyxTB5FcFhH';
+    const url = `https://www.quandl.com/api/v3/datasets/FRED/DGS10.json?api_key=${QUANDL_API_KEY}`;
     return sendGetRequest(url);
 }
 
 async function sendGetRequest(url: string, config?: AxiosRequestConfig): Promise<AxiosResponse<any>> {
     return axios(url, config);
 }
-
-
-main();
